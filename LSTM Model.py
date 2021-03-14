@@ -177,7 +177,7 @@ def train_model(ticker, no_historic_steps=60, skip_forward=1, y_index=3, start_d
     
 
 
-def predict(current_date):
+def predict(current_date, model, sb):
     #current_date = datetime.datetime.now().date()
     #next_day_model = tf.keras.models.load_model('Trained_Models/next/nasdaq_gene')
     #next_day_sc = load(open('Trained_Models/next/scaler', 'rb'))
@@ -217,30 +217,31 @@ def predict(current_date):
     return five_days
 
 
-fast_forward = 5
-train_model("^IXIC", skip_forward=fast_forward, start_date='2016-1-1',end_date='2021-03-10', is_build_mode=False)
+#fast_forward = 5
+#train_model("^IXIC", skip_forward=fast_forward, start_date='2016-1-1',end_date='2021-03-10', is_build_mode=False)
 #current_date = datetime.datetime.now().date()
     
 five_days_model = tf.keras.models.load_model('model/nasdaq_gene')
 five_days_sc = load(open('model/scaler', 'rb'))
 
-df = yf.download(tickers="^IXIC",interval='1d', start=datetime.date(2021, 1, 1), end=datetime.date(2021, 3, 12))
+df = yf.download(tickers="^IXIC",interval='1d', start=datetime.date(2021, 3, 4), end=datetime.date(2021, 3, 13))
 df_results = df[["Close"]]
 predicted = []
 for index, row in df_results.iterrows():
-    predicted.append(predict(index.date()))
+    current = index.date()
+    earlier = index.date() - datetime.timedelta(days=5)
+    predicted.append((predict(current, five_days_model, five_days_sc)/predict(earlier, five_days_model, five_days_sc)-1)*100)
  
 df_results["predicted"] = predicted
-df_results["actual_change"] = ((df_results.Close.shift(-5)/df_results.Close)-1)*100
-df_results["predicted_change"] = ((df_results.predicted/df_results.predicted.shift(5))-1)*100
+#df_results["actual_change"] = ((df_results.Close.shift(-5)/df_results.Close)-1)*100
+#df_results["predicted_change"] = ((df_results.predicted/df_results.predicted.shift(5))-1)*100
 #df_results["predicted_change"] = df_results.predicted_change.shift(-5)
 #df_results["five_days_predicted"] = five_d
-df_results["Close"] = df_results.Close.shift(-5)
-df_results[["Close","predicted"]].plot()
+#df_results["Close"] = df_results.Close.shift(-5)
+#df_results[["Close","predicted"]].plot()
 
-current = datetime.datetime.now().date()
-earlier = datetime.datetime.now().date() - datetime.timedelta(days=5)
-print((predict(current)/predict(earlier)-1)*100)
+
+#print((predict(current)/predict(earlier)-1)*100)
 
 
 '''
